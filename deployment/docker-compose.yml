@@ -1,0 +1,67 @@
+version: '3.1'
+
+services:
+  wp-db:
+    build:
+      context: ../
+      dockerfile: deployment/mysql.Dockerfile
+    restart: always          
+    hostname: mysql
+    volumes:
+      - ./data:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=mojtaba6128
+      - MYSQL_ROOT_PASSWORD=mojtaba6128
+    ports:
+      - 33070:3306
+    networks:
+      wp-net:
+        ipv4_address: 172.30.10.10
+        aliases :
+          - wdb
+
+  wp-php:
+    build:
+      context: ../
+      dockerfile: deployment/php.Dockerfile
+    restart: always
+    hostname: wordpress
+    working_dir: /var/www/html
+    volumes:
+      - /mojtaba/wordperss-app/src:/app
+    networks:
+      wp-net:
+        ipv4_address: 172.30.10.40
+ 
+  wp-web:
+    build:
+      context: ../
+      dockerfile: deployment/nginx.Dockerfile
+    restart: always         
+    working_dir: /var/www
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /mojtaba/wordperss-app/nginx/conf.d:/etc/nginx/conf.d 
+      - /mojtaba/wordperss-app/nginx/cert:/etc/nginx/cert
+    links:
+        - wp-php 
+    networks:
+      wp-net:
+        ipv4_address: 172.30.10.30
+
+volumes:
+  wp-data:
+  db-data:
+  
+networks:
+  wp-net:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.30.10.0/24   
+     
+
